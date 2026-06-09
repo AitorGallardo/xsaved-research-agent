@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.env
+output/
+# Internal-only notes (kept private, like the sibling projects).
+PLAN.md
+LEARNING.md
