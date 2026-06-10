@@ -16,8 +16,13 @@ So before you run the agent, the engine underneath it has to be up.
 ## Terminal 1 — start the RAG engine (leave it running)
 
 ```bash
+# 0. start OrbStack (your local Docker runtime), if it isn't already running
+open -a OrbStack              # macOS — give it a few seconds to boot
+docker ps                     # sanity check — errors if the daemon isn't ready yet
+
+# 1. launch the local database + search service
 cd xsaved-rag
-docker compose up -d --wait   # Postgres + pgvector
+docker compose up -d --wait   # starts the Postgres + pgvector container (xsaved-rag-db on :5432)
 npm run db:migrate            # first time only — creates the tables
 npm run index                 # first time only — embeds the bookmarks (~$0.0002)
 npm run serve                 # http://localhost:8790 — LEAVE THIS RUNNING
@@ -85,6 +90,7 @@ So you can literally watch one question fan out into searches and come back as a
 
 ## If it breaks
 
+- `docker compose` says **"cannot connect to the Docker daemon"** → OrbStack isn't running yet (`open -a OrbStack`, wait a few seconds, retry).
 - Tool says **"could not reach xsaved-rag service"** → Terminal 1 isn't running (`npm run serve`).
 - **"Cannot find module .../xsaved-mcp/dist/index.js"** → you didn't build the MCP server (`cd xsaved-mcp && npm run build`), or `MCP_SERVER_PATH` is wrong.
 - **`adaptive thinking is not supported on this model`** → you set `AGENT_MODEL` to Haiku/an older model *and* an older build; pull latest (the agent now gates adaptive thinking on model support).
