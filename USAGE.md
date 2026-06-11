@@ -23,9 +23,38 @@ docker ps                     # sanity check — errors if the daemon isn't read
 # 1. launch the local database + search service
 cd xsaved-rag
 docker compose up -d --wait   # starts the Postgres + pgvector container (xsaved-rag-db on :5432)
-npm run db:migrate            # first time only — creates the tables
-npm run index                 # first time only — embeds the bookmarks (~$0.0002)
+# one-time setup — tables, media, embeddings (idempotent; safe to re-run)
+npm run setup                 # = db:migrate + download:media + index
+                              #   · downloads ~165 tweet images via the asset manifest
+                              #   · captions images/videos with gpt-5.4-nano (OCR) — ~$0.07 one-time
+                              #   · embeds tweet text + captions (~$0.0002)
+                              #   skip the paid captions: ENRICH_VISION=false npm run setup
 npm run serve                 # http://localhost:8790 — LEAVE THIS RUNNING
+```
+
+```bash
+# 1.1 if you want to run queries yourself (not as part of the workflow usage)
+  Open a SQL shell inside the container:
+
+  docker exec -it xsaved-rag-db psql -U xsaved -d xsaved_rag
+
+  Useful meta-commands: \dt (list tables), \d bookmarks (describe), \q (quit). Quick sanity check:
+
+  SELECT count(*) FROM bookmarks;
+  SELECT id, author, left(text, 80) FROM bookmarks LIMIT 10;
+
+Three "cars" searches
+
+  Keyword (normal) — this is what the app's keywordSearch does, runnable as raw SQL:
+
+  SELECT b.id, b.author, left(b.text, 120) AS text,
+         ts_rank_cd(b.text_search, q) AS score
+  FROM bookmarks b, to_tsquery('english', 'car | cars') q
+  WHERE b.text_search @@ q
+  ORDER BY score DESC
+  LIMIT 20;
+
+  (Dumb-but-simple alternative: ... WHERE text ILIKE '%car%'.)
 ```
 
 ## One-time — build the MCP server the agent spawns
