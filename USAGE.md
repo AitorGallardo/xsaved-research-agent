@@ -15,20 +15,13 @@ So before you run the agent, the engine underneath it has to be up.
 
 ## Terminal 1 — start the RAG engine (leave it running)
 
-```bash
-# 0. start OrbStack (your local Docker runtime), if it isn't already running
-open -a OrbStack              # macOS — give it a few seconds to boot
-docker ps                     # sanity check — errors if the daemon isn't ready yet
+The agent drives `xsaved-rag` underneath, so the engine must be up on :8790.
+Startup steps live in one place: **[`xsaved-rag/USAGE.md`](../xsaved-rag/USAGE.md)**. TL;DR:
 
-# 1. launch the local database + search service
+```bash
 cd xsaved-rag
-docker compose up -d --wait   # starts the Postgres + pgvector container (xsaved-rag-db on :5432)
-# one-time setup — tables, media, embeddings (idempotent; safe to re-run)
-npm run setup                 # = db:migrate + download:media + index
-                              #   · downloads ~165 tweet images via the asset manifest
-                              #   · captions images/videos with gpt-5.4-nano (OCR) — ~$0.07 one-time
-                              #   · embeds tweet text + captions (~$0.0002)
-                              #   skip the paid captions: ENRICH_VISION=false npm run setup
+docker compose up -d --wait
+npm run setup                 # one-time: tables + media + embeddings (details in xsaved-rag/USAGE.md)
 npm run serve                 # http://localhost:8790 — LEAVE THIS RUNNING
 ```
 
